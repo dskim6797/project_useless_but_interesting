@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Christmas Tree</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        #canvas { display: block; }
+        #ui-layer {
+            position: absolute;
+            /* 위치를 왼쪽 상단으로 변경 */
+            top: 20px;
+            left: 20px;
+            /* 중앙 정렬을 위한 transform 속성 제거 */
+
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border: 1px solid #0f0;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #0f0;
+            z-index: 10;
+        }
+        input {
+            background: #000;
+            border: 1px solid #fff;
+            color: #0f0;
+            padding: 8px;
+            font-family: inherit;
+            font-weight: bold;
+            outline: none;
+        }
+        button {
+            background: #006400;
+            color: #fff;
+            border: 1px solid #0f0;
+            padding: 8px 15px;
+            font-family: inherit;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background: #008000; }
+        button:disabled {
+            background: #333;
+            border-color: #555;
+            color: #888;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #ffff00;
+        }
+    </style>
+</head>
+<body>
+    {% csrf_token %}
+    <canvas id="canvas"></canvas>
+
+    <div id="ui-layer">
+        <div style="margin-bottom: 5px;">❄️ 나만의 눈덩이 메시지 추가 (IP당 1회) ❄️</div>
+        <input type="text" id="msgInput" placeholder="메시지 입력 (최대 15자)" maxlength="15">
+        <button id="addBtn">보내기</button>
+        <div id="statusMsg" class="status"></div>
+    </div>
+
+    <!-- Django에서 전달한 작성 여부 데이터 -->
+    <script>
+        const USER_HAS_POSTED = {{ has_posted }};
+        const IS_ADMIN = {{ user.is_superuser|yesno:"true,false"}};
+        console.log(IS_ADMIN)
+    </script>
+
+    <!-- 정적 파일 경로 (static 폴더) -->
+    <script src="/static/script.js"></script>
+</body>
+</html>

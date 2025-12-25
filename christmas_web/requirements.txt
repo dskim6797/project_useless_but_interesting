@@ -1,0 +1,4 @@
+asgiref==3.11.0 ; python_version >= "3.12" and python_version < "4.0"
+django==5.0.3 ; python_version >= "3.12" and python_version < "4.0"
+sqlparse==0.5.5 ; python_version >= "3.12" and python_version < "4.0"
+tzdata==2025.3 ; python_version >= "3.12" and python_version < "4.0" and sys_platform == "win32"
