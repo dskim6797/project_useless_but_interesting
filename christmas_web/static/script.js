@@ -96,7 +96,7 @@ const ONMT_COLORS = [
     "#E0E0E0FF", // SILVER2
 ]
 
-const FONT_SIZE = 12; // 트리가 커져서 폰트 크기를 약간 줄임
+const FONT_SIZE = 8; // 트리가 커져서 폰트 크기를 약간 줄임
 const FONT_FAMILY = `bold ${FONT_SIZE}px monospace`;
 
 let width, height;
