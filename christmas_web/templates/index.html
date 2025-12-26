@@ -13,39 +13,56 @@
             font-family: 'Courier New', Courier, monospace;
         }
         #canvas { display: block; }
+
+        /* --- UI 레이어 박스 크기 조절 --- */
         #ui-layer {
             position: absolute;
-            /* 위치를 왼쪽 상단으로 변경 */
-            top: 20px;
-            left: 20px;
-            /* 중앙 정렬을 위한 transform 속성 제거 */
-
+            top: 15px; /* 여백 약간 감소 */
+            left: 15px;
             text-align: center;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px;
+            background: rgba(0, 0, 0, 0.85); /* 가독성을 위해 불투명도 약간 증가 */
+            padding: 10px 12px; /* 패딩 감소 (기존 15px) */
             border: 1px solid #0f0;
-            border-radius: 8px;
-            box-shadow: 0 0 10px #0f0;
+            border-radius: 6px;
+            box-shadow: 0 0 8px #0f0;
             z-index: 10;
+            max-width: 280px; /* 최대 너비 제한 */
         }
+
+        /* 상단 제목 텍스트 크기 */
+        .ui-title {
+            margin-bottom: 8px;
+            font-size: 13px; /* 글자 크기 감소 */
+            font-weight: bold;
+            letter-spacing: -0.5px;
+        }
+
+        /* 입력창 크기 조절 */
         input {
             background: #000;
             border: 1px solid #fff;
             color: #0f0;
-            padding: 8px;
+            padding: 5px 8px; /* 패딩 감소 (기존 8px) */
+            font-size: 13px; /* 글자 크기 감소 */
             font-family: inherit;
             font-weight: bold;
             outline: none;
+            width: 140px; /* 너비 고정 */
         }
+
+        /* 버튼 크기 조절 */
         button {
             background: #006400;
             color: #fff;
             border: 1px solid #0f0;
-            padding: 8px 15px;
+            padding: 5px 12px; /* 패딩 감소 (기존 8px 15px) */
+            font-size: 13px; /* 글자 크기 감소 */
             font-family: inherit;
             cursor: pointer;
             font-weight: bold;
+            vertical-align: top; /* 입력창과 높이 정렬 */
         }
+
         button:hover { background: #008000; }
         button:disabled {
             background: #333;
@@ -53,10 +70,37 @@
             color: #888;
             cursor: not-allowed;
         }
+
+        /* 상태 메시지 크기 */
         .status {
-            margin-top: 5px;
-            font-size: 12px;
+            margin-top: 4px;
+            font-size: 11px; /* 글자 크기 감소 (기존 12px) */
             color: #ffff00;
+        }
+
+        /* --- 모바일 최적화 (화면이 작을 때) --- */
+        @media (max-width: 600px) {
+            #ui-layer {
+                top: 10px;
+                left: 10px;
+                padding: 8px 10px;
+                max-width: 230px; /* 모바일에서 더 슬림하게 */
+            }
+            .ui-title {
+                font-size: 11px; /* 모바일 제목 더 작게 */
+            }
+            input {
+                width: 110px; /* 입력창 더 작게 */
+                font-size: 12px;
+                padding: 4px 6px;
+            }
+            button {
+                padding: 4px 10px;
+                font-size: 12px;
+            }
+            .status {
+                font-size: 10px;
+            }
         }
     </style>
 </head>
@@ -65,19 +109,18 @@
     <canvas id="canvas"></canvas>
 
     <div id="ui-layer">
-        <div style="margin-bottom: 5px;">❄️ 나만의 눈덩이 메시지 추가 (IP당 1회) ❄️</div>
-        <input type="text" id="msgInput" placeholder="메시지 입력 (최대 15자)" maxlength="15">
+        <!-- class="ui-title" 추가하여 CSS로 제어 -->
+        <div class="ui-title">❄️ 나만의 눈덩이 추가 (IP당 1회) ❄️</div>
+        <input type="text" id="msgInput" placeholder="메시지 입력" maxlength="15">
         <button id="addBtn">보내기</button>
         <div id="statusMsg" class="status"></div>
     </div>
 
-    <!-- Django에서 전달한 작성 여부 데이터 -->
     <script>
         const USER_HAS_POSTED = {{ has_posted }};
         const IS_ADMIN = {{ user.is_superuser|yesno:"true,false"}};
     </script>
 
-    <!-- 정적 파일 경로 (static 폴더) -->
     <script src="/static/script.js"></script>
 </body>
 </html>
