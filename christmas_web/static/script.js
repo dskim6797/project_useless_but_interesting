@@ -418,7 +418,7 @@ function drawTree(now) {
                 ctx.fillText("•", x, y);
 
             } else if (char === "o") { // 장식구
-                const ONMT_FONT_SIZE = 22;
+                const ONMT_FONT_SIZE = 15;
                 const msgCharWidth = ONMT_FONT_SIZE * 0.9;
                 ctx.font = `bold ${ONMT_FONT_SIZE}px monospace`;
 
