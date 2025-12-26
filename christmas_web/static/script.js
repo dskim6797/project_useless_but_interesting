@@ -193,40 +193,6 @@ async function init() {
     window.addEventListener('resize', resize);
     resize();
 
-    // --- 새로고침(방문) 횟수 체크 기능 ---
-    try {
-        let refreshCount = parseInt(localStorage.getItem('refreshCount') || '0');
-        refreshCount++;
-
-        if (refreshCount === 5) {
-            alert("새로고침 많이 하지마라 돈나간다.\n15번까지 봐준다");
-        } else if (refreshCount === 15) {
-            alert("여기까지 왔는가?\n마지막 경고요.\n절대 30번은 넘지 마시게");
-        } else if (refreshCount === 30) {
-            alert("기어이 여기까지 오고말았는가?\n크리스마스 선물이요.\n딱 한목숨 더 주도록 하지.\n목숨을 소중히 여기시게");
-        } else if (refreshCount === 31) {
-            alert("자넨 선을 넘어버렸어.\n형벌을 내리겠다.")
-            alert("무간지옥!")
-            let n = 0;
-            while (n < refreshCount) {
-                alert("업보만큼의 형벌이 내려졌습니다.\n업보를 청산하세요.\n" + n + "/" + refreshCount);
-                n++;
-            }
-        } else if (refreshCount > 32 && refreshCount < 35) {
-            alert("...")
-        } else if (refreshCount === 36) {
-            alert("개발자 이스터에그에 도달했습니다.")
-            alert("개발자가 당신을 관조합니다.")
-            alert("개발자가 크리스마스에 새로고침을 반복하는 당신을 딱하게 여깁니다.")
-            alert("무한한 새로고침 권한을 부여합니다.")
-        }
-        localStorage.setItem('refreshCount', refreshCount);
-    } catch (e) {
-        // 로컬 스토리지 사용 불가 시 무시 (시크릿 모드 등)
-        console.log("Local storage not available");
-    }
-    // ----------------------------------
-
     for(let i=0; i<150; i++) {
         flakes.push(new Flake(Math.random() * width));
         flakes[flakes.length-1].y = Math.random() * height;
