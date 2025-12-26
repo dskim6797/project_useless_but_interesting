@@ -465,12 +465,12 @@ function drawTree(now) {
     });
 
     const msg = "석이네";
-    const MSG_FONT_SIZE = 22;
+    const MSG_FONT_SIZE = 18;
     const msgCharWidth = MSG_FONT_SIZE * 0.9;
     ctx.font = `bold ${MSG_FONT_SIZE}px monospace`;
 
     const msgX = (width / 2) - ((msg.length * msgCharWidth) / 2);
-    const msgY = height - 500;
+    const msgY = height - 325;
 
     for (let i = 0; i < msg.length; i++) {
         const hue = (now * 50 + i * 20) % 360;
