@@ -7,7 +7,6 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('get_messages/', views.get_messages, name='get_messages'),
     path('add_message/', views.add_message, name='add_message'),
-    path('signup/', views.add_message, name='add_message'),
 
     # Auth
     path('admin/', admin.site.urls),
