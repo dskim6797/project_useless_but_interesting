@@ -107,7 +107,7 @@ function updateLoop() {
         if (countdownDisplay) countdownDisplay.classList.add('hidden');
         if (strikeBtn && !hasStruck) {
             strikeBtn.disabled = false;
-            strikeBtn.innerText = "울려라 종!";
+            strikeBtn.innerText = "2025 잘가라 \n울려라 종!";
         }
 
         // 정각 애니메이션 (5초간 유지)
@@ -121,7 +121,7 @@ function updateLoop() {
 
 // --- 타종 API ---
 async function strikeBell() {
-    unlockAudio(); // 클릭 시 오디오 권한 확보
+    // unlockAudio(); // 클릭 시 오디오 권한 확보
     if (hasStruck) return;
 
     const csrfToken = checkAuth();
