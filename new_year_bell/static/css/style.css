@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap');
+
+body {
+    background-color: #060606;
+    color: #ffffff;
+    font-family: 'Noto Sans KR', sans-serif;
+    overflow: hidden;
+    height: 100vh;
+}
+
+.title-font {
+    font-family: 'Black Han Sans', sans-serif;
+}
+
+/* --- 종 애니메이션 --- */
+#bell-container {
+    perspective: 1000px;
+}
+
+#bell-img {
+    width: 200px;
+    transform-origin: top center;
+    transition: transform 0.5s ease-in-out;
+}
+
+@keyframes ring-bell {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(20deg); }
+    75% { transform: rotate(-20deg); }
+    100% { transform: rotate(0deg); }
+}
+
+.bell-ringing {
+    animation: ring-bell 2s infinite ease-in-out;
+}
+
+/* --- 메시지 낙하 애니메이션 --- */
+.falling-message {
+    position: absolute;
+    white-space: nowrap;
+    pointer-events: none;
+    font-weight: bold;
+    opacity: 0.8;
+    z-index: 5;
+    animation: fall linear forwards;
+}
+
+@keyframes fall {
+    from { transform: translateY(-50px) translateX(0); }
+    to { transform: translateY(110vh) translateX(20px); }
+}
+
+/* --- 스크롤바 숨기기 --- */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* --- 버튼 글로우 및 펄스 효과 --- */
+#strikeBtn:not(:disabled) {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}

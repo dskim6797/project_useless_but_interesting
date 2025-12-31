@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>랭킹 차트 - 2026 제야의 종</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap');
+        body { background-color: #060606; color: white; font-family: 'Noto Sans KR', sans-serif; }
+        .title-font { font-family: 'Black Han Sans', sans-serif; }
+    </style>
+</head>
+<body class="flex flex-col items-center p-8">
+    <nav class="w-full max-w-2xl mb-12 flex gap-4 text-gray-400">
+        <a href="{% url 'home' %}" class="hover:text-yellow-500">← 홈으로 돌아가기</a>
+    </nav>
+
+    <div class="w-full max-w-2xl bg-white/5 rounded-3xl border border-white/10 p-8 backdrop-blur-xl">
+        <h1 class="title-font text-4xl text-yellow-500 mb-8 flex items-center gap-3">
+            <span>🏆</span> 랭킹 차트
+        </h1>
+
+        <div class="overflow-hidden">
+            <ul id="rankingList" class="space-y-4">
+                <!-- script.js에서 데이터를 받아와 동적으로 렌더링합니다 -->
+                <li class="text-gray-500 text-center py-12 italic">순위를 불러오는 중...</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="{% static 'js/script.js' %}" defer></script>
+    <script>
+        // 페이지 로드 후 즉시 랭킹 업데이트
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof fetchRanking === 'function') fetchRanking();
+            setInterval(() => {
+                if (typeof fetchRanking === 'function') fetchRanking();
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

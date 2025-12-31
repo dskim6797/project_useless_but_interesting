@@ -1,0 +1,127 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 제야의 종 - Project: useless_but_interesting</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        #seoulTime {
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            line-height: 1.2;
+        }
+        /* 모바일 대응 폰트 크기 조정 */
+        @media (max-width: 768px) {
+            #seoulTime { font-size: 2.5rem; }
+            #bell-img { font-size: 6rem; }
+        }
+
+        /* 채팅창 스타일 보정 */
+        .chat-container {
+            backdrop-filter: blur(12px);
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="relative flex flex-col items-center justify-center min-h-screen bg-[#060606] text-white overflow-hidden">
+
+    <!-- Django CSRF 토큰 -->
+    {% csrf_token %}
+
+    <!-- 좌측 상단 네비게이션 -->
+    <div class="absolute top-5 left-5 flex items-center gap-4 z-30 text-sm md:text-base font-medium text-gray-300">
+        <a href="{% url 'home' %}" class="hover:text-yellow-500 transition-colors">홈</a>
+        {% if user.is_authenticated %}
+            <form action="{% url 'logout' %}" method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="hover:text-red-500 transition-colors">로그아웃</button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}" class="hover:text-yellow-500 transition-colors">로그인</a>
+            <a href="{% url 'signup' %}" class="hover:text-yellow-500 transition-colors">회원가입</a>
+        {% endif %}
+        <a href="{% url 'api-ranking' %}" class="hover:text-yellow-500 transition-colors">랭킹차트</a>
+    </div>
+
+    <!-- 우측 상단 실시간 참여자 수 -->
+    <div class="absolute top-5 right-5 z-30 text-right">
+        <div class="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest">Live Users</div>
+        <div id="activeUsers" class="text-xl md:text-2xl font-bold text-green-400">0명</div>
+    </div>
+
+    <!-- 중앙 메인 섹션: 시계 및 종 -->
+    <div class="text-center z-10 flex flex-col items-center px-4 w-full">
+        <!-- 서울 표준시 시계 -->
+        <div id="seoulDate" class="text-yellow-500/80 text-lg md:text-2xl font-mono mb-1 tracking-widest">2026년 01월 01일</div>
+        <div id="seoulTime" class="text-5xl md:text-7xl mb-4 tracking-tighter text-white font-bold">00:00:00</div>
+
+        <!-- 10초 카운트다운 -->
+        <div id="countdownDisplay" class="title-font text-2xl md:text-2xl mb-2 text-yellow-500 hidden animate-bounce">10</div>
+
+        <!-- 종 컨테이너 -->
+        <div id="bell-container" class="mb-8 flex justify-center">
+            <div id="bell-img" class="text-8xl md:text-9xl drop-shadow-[0_0_30px_rgba(255,215,0,0.3)]">🔔</div>
+        </div>
+
+        <div class="text-[9px] md:text-[11px] font-normal mt-2 leading-tight opacity-70">
+            <span> 🚨 로그인 후 이용가능!!!</span><br>
+            <span>버튼은 새해 60초 전부터 동작하며, 한번만 클릭 가능합니다.</span><br>
+            <span>2026년 01월 01일 00:00:00에 가장 가깝게 클릭하세요.</span>
+        </div>
+
+        <!-- 타종 버튼 및 채팅 버튼 영역 -->
+        <div class="flex flex-col items-center gap-6 w-full max-w-xs mt-3">
+            <button id="strikeBtn" disabled
+                class="w-full bg-yellow-600 hover:bg-yellow-500 disabled:bg-gray-800 disabled:text-gray-500 text-white font-bold py-4 rounded-full text-xl md:text-2xl transition-all shadow-xl">
+                기다리는 중
+            </button>
+            <!-- 채팅창 열기 버튼 (text-base md:text-lg로 글자 크기 상향 조정) -->
+            <button id="openChatBtn" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-base md:text-lg">
+                <span>💬</span> 덕담 나누기
+            </button>
+        </div>
+    </div>
+
+    <!-- 반투명 채팅창 (초기 숨김) -->
+    <div id="chatWindow" class="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/60 hidden">
+        <div class="chat-container w-full max-w-md h-[500px] flex flex-col rounded-3xl overflow-hidden shadow-2xl">
+            <!-- 채팅창 헤더 -->
+            <div class="flex items-center justify-between p-4 border-b border-white/10">
+                <h3 class="font-bold text-yellow-500">실시간 채팅</h3>
+                <button id="closeChatBtn" class="text-gray-400 hover:text-white text-xl">&times;</button>
+            </div>
+
+            <!-- 메시지 목록 -->
+            <div id="chatMessages" class="chat-messages flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+                <!-- 메시지들이 여기에 쌓임 -->
+                <p class="text-center text-white-500 italic py-10">새해 덕담을 나누어 보세요!</p>
+            </div>
+
+            <!-- 메시지 입력 -->
+            <div class="p-4 bg-white/5 border-t border-white/10">
+                <div class="flex gap-2">
+                    <input type="text" id="msgInput" maxlength="30" placeholder="메시지 입력..."
+                        class="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-yellow-500 text-sm">
+                    <button id="sendMsgBtn" class="bg-blue-600 px-4 py-2 rounded-xl font-bold hover:bg-blue-500 transition-all text-sm">전송</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="bellSound" src="{% static 'sounds/bell.mp3' %}" preload="auto"></audio>
+
+    <script src="{% static 'js/script.js' %}" defer></script>
+</body>
+</html>
