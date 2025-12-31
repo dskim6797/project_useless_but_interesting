@@ -118,12 +118,27 @@
             </div>
 
             <!-- 메시지 입력 -->
+{#            <div class="p-4 bg-white/5 border-t border-white/10">#}
+{#                <div class="flex gap-2">#}
+{#                    {% if user.is_authenticated %}#}
+{#                        <input type="text" id="msgInput" maxlength="30" placeholder="메시지 입력..."#}
+{#                            class="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-yellow-500 text-sm transition-all">#}
+{#                        <button id="sendMsgBtn" class="bg-indigo-600 px-4 py-2 rounded-xl font-bold hover:bg-indigo-500 transition-all text-sm">전송</button>#}
+{#                    {% else %}#}
+{#                        <div class="flex-1 bg-black/20 border border-white/5 rounded-xl px-4 py-2 text-gray-500 text-center text-xs">#}
+{#                            채팅을 하려면 <a href="{% url 'login' %}" class="text-indigo-400 underline">로그인</a>이 필요합니다.#}
+{#                        </div>#}
+{#                    {% endif %}#}
+{#                </div>#}
+{#            </div>#}
             <div class="p-4 bg-white/5 border-t border-white/10">
-                <div class="flex gap-2">
+                <div class="flex gap-2 items-center">
                     {% if user.is_authenticated %}
                         <input type="text" id="msgInput" maxlength="30" placeholder="메시지 입력..."
-                            class="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-yellow-500 text-sm transition-all">
-                        <button id="sendMsgBtn" class="bg-indigo-600 px-4 py-2 rounded-xl font-bold hover:bg-indigo-500 transition-all text-sm">전송</button>
+                            class="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-yellow-500 text-sm transition-all min-w-0">
+                        <button id="sendMsgBtn" class="shrink-0 whitespace-nowrap bg-indigo-600 px-5 py-2 rounded-xl font-bold hover:bg-indigo-500 transition-all text-sm">
+                            전송
+                        </button>
                     {% else %}
                         <div class="flex-1 bg-black/20 border border-white/5 rounded-xl px-4 py-2 text-gray-500 text-center text-xs">
                             채팅을 하려면 <a href="{% url 'login' %}" class="text-indigo-400 underline">로그인</a>이 필요합니다.
