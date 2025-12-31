@@ -15,6 +15,7 @@ urlpatterns = [
     path('api/time/', views.ServerTimeAPI.as_view(), name='api-time'),
     path('api/strike/', views.StrikeCreateAPI.as_view(), name='api-strike'),
     path('api/ranking/', views.RankingListAPI.as_view(), name='api-ranking'),
-    path('api/messages/', views.MessageAPI.as_view(), name='api-messages'),
+    path('api/messages/', views.get_messages, name='get_messages'),
+    path('api/messages/send/', views.send_message, name='send_message'),
     path('api/heartbeat/', views.HeartbeatAPI.as_view(), name='api-heartbeat'),
 ]

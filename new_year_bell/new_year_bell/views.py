@@ -1,4 +1,5 @@
 import datetime
+from django.http import JsonResponse
 from django.utils import timezone
 from django.views.generic import TemplateView, CreateView
 from django.urls import reverse_lazy
@@ -9,7 +10,7 @@ from django.db.models.functions import Abs
 from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.generics import ListAPIView, CreateAPIView
+from rest_framework.generics import ListAPIView
 from rest_framework.renderers import TemplateHTMLRenderer, JSONRenderer
 
 try:
@@ -130,10 +131,49 @@ class HeartbeatAPI(APIView):
         count = UserActivity.objects.filter(last_seen__gte=active_threshold).count()
         return Response({'active_users': count})
 
-class MessageAPI(CreateAPIView, ListAPIView):
-    queryset = FallingMessage.objects.all().order_by('-created_at')[:20]
-    serializer_class = FallingMessageSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+def get_messages(request):
+    """
+    실시간 채팅 메시지를 가져오는 뷰
+    1. 처음 접속 시(last_id=0): 최근 50개의 메시지를 가져옴
+    2. 이후(last_id > 0): 해당 ID 이후에 생성된 새 메시지만 가져옴
+    """
+    try:
+        last_id = int(request.GET.get('last_id', 0))
+    except (ValueError, TypeError):
+        last_id = 0
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    if last_id == 0:
+        # 처음 로드 시: 최근 50개를 가져와서 시간순(ID순)으로 정렬
+        messages = FallingMessage.objects.all().order_by('-id')[:100]
+        messages = reversed(messages) # 최신순을 다시 과거순으로 뒤집음
+    else:
+        # 폴링 시: 마지막으로 받은 메시지 이후의 것들만 가져옴
+        messages = FallingMessage.objects.filter(id__gt=last_id).order_by('id')
+
+    data = [{
+        'id': m.id,
+        'username': m.user.username,
+        'content': m.content,
+        'created_at': m.created_at.strftime('%H:%M:%S')
+    } for m in messages]
+
+    return JsonResponse({'messages': data})
+
+def send_message(request):
+    """
+    메시지를 전송하고 저장하는 뷰
+    """
+    if request.method == 'POST' and request.user.is_authenticated:
+        content = request.POST.get('content')
+        if content:
+            msg = FallingMessage.objects.create(user=request.user, content=content)
+            return JsonResponse({
+                'status': 'success',
+                'message': {
+                    'id': msg.id,
+                    'username': msg.user.username,
+                    'content': msg.content,
+                    'created_at': msg.created_at.strftime('%H:%M:%S')
+                }
+            })
+    return JsonResponse({'status': 'error', 'message': '로그인이 필요하거나 내용이 없습니다.'}, status=400)

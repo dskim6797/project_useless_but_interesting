@@ -1,5 +1,5 @@
 /**
- * 2026 제야의 종 - 클라이언트 사이드 로직 (통합 및 동기화 보완 버전)
+ * 2026 제야의 종 - 클라이언트 사이드 로직 (채팅 동기화 및 타종 통합 버전)
  */
 
 // 1. 포맷터 설정을 최상단에 배치하여 즉시 초기화
@@ -14,13 +14,14 @@ window.TIME_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
     hour12: false
 });
 
-console.log("script.js 로드 완료 및 포맷터 설정됨"); // 디버깅용 로그
+console.log("script.js 로드 완료 및 포맷터 설정됨");
 
 // 타겟 시간 설정 (서울 기준 2026년 1월 1일 00:00:00)
 const TARGET_TIME = new Date("2026-01-01T00:00:00+09:00").getTime();
 let serverOffset = 0;
 let hasStruck = false;
-let lastMessageId = 0;
+let lastMessageId = 0; // 메시지 추적용 ID
+let audioUnlocked = false; // 사운드 잠금 해제 상태
 
 // UI 요소 참조
 const bellImg = document.getElementById('bell-img');
@@ -55,13 +56,8 @@ function getNow() { return Date.now() + serverOffset; }
 
 // --- 로그인 상태 확인 함수 ---
 function checkAuth() {
-    // 1. CSRF 토큰 확인
     const csrf = document.querySelector('[name=csrfmiddlewaretoken]');
-    // 2. 로그아웃 폼/버튼 존재 여부 확인 (Django 템플릿 context 기반)
-    // index.html에서 로그아웃 버튼이 포함된 form을 찾습니다.
     const logoutBtn = document.querySelector('form[action*="logout"]');
-
-    // 토큰이 없거나 로그아웃 버튼이 없다면 로그아웃 상태로 간주
     if (!csrf || !logoutBtn) return false;
     return csrf.value;
 }
@@ -79,7 +75,7 @@ function unlockAudio() {
     }
 }
 
-// --- 메인 루프 (시계 업데이트) ---
+// --- 메인 루프 (시계 및 카운트다운 업데이트) ---
 function updateLoop() {
     const now = getNow();
     const diff = TARGET_TIME - now;
@@ -90,7 +86,6 @@ function updateLoop() {
         try {
             const parts = window.TIME_FORMATTER.formatToParts(d);
             const getPart = (type) => parts.find(p => p.type === type).value;
-
             seoulDateDisplay.innerText = `${getPart('year')}년 ${getPart('month')} ${getPart('day')}`;
             seoulTimeDisplay.innerText = `${getPart('hour')}:${getPart('minute')}:${getPart('second')}`;
         } catch (e) {
@@ -98,12 +93,11 @@ function updateLoop() {
         }
     }
 
-    // 카운트다운 및 타종 로직
-    // console
-    if (diff > 0 && diff <= 1000*60) {
+    // 카운트다운 로직
+    if (diff > 0 && diff <= 1000 * 60) {
         if (countdownDisplay) {
             countdownDisplay.classList.remove('hidden');
-            countdownDisplay.innerText = "2025년이 " + '\n' + (diff / 1000).toFixed(2) + "초 남았습니다.";
+            countdownDisplay.innerText = "2025년이 \n " + (diff / 1000).toFixed(2) + "초 남았습니다.";
         }
         if (strikeBtn) {
             strikeBtn.disabled = false;
@@ -116,6 +110,7 @@ function updateLoop() {
             strikeBtn.innerText = "울려라 종!";
         }
 
+        // 정각 애니메이션 (5초간 유지)
         if (diff > -5000 && bellImg && !bellImg.classList.contains('bell-ringing')) {
             bellImg.classList.add('bell-ringing');
             if (bellSound) bellSound.play().catch(() => {});
@@ -126,10 +121,11 @@ function updateLoop() {
 
 // --- 타종 API ---
 async function strikeBell() {
+    unlockAudio(); // 클릭 시 오디오 권한 확보
     if (hasStruck) return;
+
     const csrfToken = checkAuth();
     if (!csrfToken) return alert("로그인 후 이용 가능합니다.");
-    const csrf = document.querySelector('[name=csrfmiddlewaretoken]');
 
     try {
         const res = await fetch('/api/strike/', {
@@ -139,13 +135,12 @@ async function strikeBell() {
 
         const data = await res.json();
         if (res.ok) {
-            // super 계정인 경우 로직
-            if (data.username === 'admin') {
+            // 관리자 계정은 무제한 모드
+            if (data.username === 'admin' || data.username === 'super') {
                 strikeBtn.innerText = "울려라 종! (무제한 모드)";
-                // 애니메이션 및 사운드 즉시 재실행
                 if (bellImg) {
                     bellImg.classList.remove('bell-ringing');
-                    void bellImg.offsetWidth; // 리플로우 강제 발생으로 애니메이션 초기화
+                    void bellImg.offsetWidth;
                     bellImg.classList.add('bell-ringing');
                 }
                 if (bellSound) {
@@ -153,7 +148,6 @@ async function strikeBell() {
                     bellSound.play().catch(() => {});
                 }
             } else {
-                // 일반 계정은 1회로 제한
                 hasStruck = true;
                 strikeBtn.disabled = true;
                 strikeBtn.innerText = "참여 완료";
@@ -164,17 +158,14 @@ async function strikeBell() {
     } catch (e) { alert("오류 발생"); }
 }
 
-// --- 랭킹 데이터 가져오기 (ranking.html에서 호출됨) ---
+// --- 랭킹 데이터 가져오기 ---
 window.fetchRanking = async function() {
     if (!rankingList) return;
-
     try {
         const res = await fetch('/api/ranking/', {
             headers: { 'Accept': 'application/json' }
         });
         const data = await res.json();
-
-        // 데이터가 "records" 키 안에 담겨있음 (views.py 확인)
         const records = data.records || [];
 
         if (records.length === 0) {
@@ -187,7 +178,6 @@ window.fetchRanking = async function() {
             const li = document.createElement('li');
             li.className = "flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-white/20 transition-all";
 
-            // 메달 아이콘 결정
             let medal = `<span class="text-gray-500 w-8 font-mono">${index + 1}</span>`;
             if (index === 0) medal = `<span class="text-2xl w-8">🥇</span>`;
             if (index === 1) medal = `<span class="text-2xl w-8">🥈</span>`;
@@ -207,46 +197,49 @@ window.fetchRanking = async function() {
             `;
             rankingList.appendChild(li);
         });
-    } catch (e) {
-        console.error("랭킹 로드 오류:", e);
-    }
+    } catch (e) { console.error("랭킹 로드 오류:", e); }
 };
 
 // --- 채팅 관련 함수 ---
-function appendToChat(username, content) {
-    if (!chatMessages) return;
-    if (chatMessages.querySelector('p.italic')) chatMessages.innerHTML = '';
-
-    const msgDiv = document.createElement('div');
-    msgDiv.className = "flex flex-col items-start w-full space-y-1";
-    msgDiv.innerHTML = `
-        <span class="text-[10px] text-gray-500 ml-1">${username}</span>
-        <div class="bg-white/10 border border-white/10 px-4 py-2 rounded-2xl rounded-tl-none max-w-[85%] break-all text-white">
-            ${escapeHtml(content)}
-        </div>
-    `;
-    chatMessages.appendChild(msgDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
+function appendToChat(msg) {
+    if (!chatMessages) return;
+    // 초기 안내 문구 삭제
+    if (chatMessages.querySelector('p.italic')) chatMessages.innerHTML = '';
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = "flex flex-col items-start w-full space-y-1";
+    msgDiv.innerHTML = `
+        <div class="flex justify-between items-center w-full px-1">
+            <span class="text-[10px] text-yellow-500/80 font-bold">${msg.username}</span>
+            <span class="text-[8px] text-gray-500">${msg.created_at}</span>
+        </div>
+        <div class="bg-white/10 border border-white/10 px-4 py-2 rounded-2xl rounded-tl-none max-w-[90%] break-all text-white text-sm">
+            ${escapeHtml(msg.content)}
+        </div>
+    `;
+    chatMessages.appendChild(msgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// 메시지 가져오기 (초기 50개 로드 및 지속 동기화)
 async function fetchMessages() {
     try {
-        const res = await fetch('/api/messages/');
+        const res = await fetch(`/api/messages/?last_id=${lastMessageId}`);
         const data = await res.json();
-        if (data.length > 0) {
-            const latest = data[0];
-            if (latest.id !== lastMessageId) {
-                lastMessageId = latest.id;
-                appendToChat(latest.username, latest.content);
-            }
+
+        if (data.messages && data.messages.length > 0) {
+            data.messages.forEach(msg => {
+                appendToChat(msg);
+                lastMessageId = Math.max(lastMessageId, msg.id);
+            });
         }
-    } catch (e) {}
+    } catch (e) { console.error("채팅 로드 오류:", e); }
 }
 
 async function heartbeat() {
@@ -261,38 +254,50 @@ async function heartbeat() {
 document.addEventListener('DOMContentLoaded', () => {
     syncTime();
     updateLoop();
+    fetchMessages(); // 최초 로드 (최근 50개)
 
-    // 사용자가 페이지 어디든 클릭하면 사운드 권한 잠금 해제
+    // 사운드 권한 해제
     document.body.addEventListener('click', unlockAudio, { once: true });
 
-    // 메인 화면 요소가 있을 때만 실행
+    // 폴링 설정
     if (activeUsersDisplay) setInterval(heartbeat, 5000);
-    if (chatMessages) setInterval(fetchMessages, 2000);
+    if (chatMessages) setInterval(fetchMessages, 3000); // 3초마다 새 메시지 체크
 
     if (strikeBtn) strikeBtn.addEventListener('click', strikeBell);
-    if (openChatBtn) openChatBtn.addEventListener('click', () => chatWindow.classList.remove('hidden'));
+    if (openChatBtn) openChatBtn.addEventListener('click', () => {
+        chatWindow.classList.remove('hidden');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
     if (closeChatBtn) closeChatBtn.addEventListener('click', () => chatWindow.classList.add('hidden'));
 
+    // 메시지 전송 로직
     const sendMessage = async () => {
         const content = msgInput.value.trim();
         if (!content) return;
 
-        const csrf = document.querySelector('[name=csrfmiddlewaretoken]');
         const csrfToken = checkAuth();
         if (!csrfToken) return alert("로그인 후 이용 가능합니다.");
 
+        const formData = new FormData();
+        formData.append('content', content);
+
         try {
-            const res = await fetch('/api/messages/', {
+            const res = await fetch('/api/messages/send/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf.value },
-                body: JSON.stringify({ content })
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
             });
             if (res.ok) {
                 msgInput.value = '';
+                fetchMessages(); // 전송 직후 즉시 동기화
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("전송 오류:", e); }
     };
 
     if (sendMsgBtn) sendMsgBtn.addEventListener('click', sendMessage);
-    if (msgInput) msgInput.addEventListener('keypress', (e) => e.key === 'Enter' && sendMessage());
+    if (msgInput) {
+        msgInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    }
 });
