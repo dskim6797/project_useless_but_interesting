@@ -17,7 +17,7 @@ window.TIME_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
 console.log("script.js 로드 완료 및 포맷터 설정됨"); // 디버깅용 로그
 
 // 타겟 시간 설정 (서울 기준 2026년 1월 1일 00:00:00)
-const TARGET_TIME = new Date("2026-01-01T00:00:00+13:00").getTime();
+const TARGET_TIME = new Date("2026-01-01T00:00:00+09:00").getTime();
 let serverOffset = 0;
 let hasStruck = false;
 let lastMessageId = 0;
