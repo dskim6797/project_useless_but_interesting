@@ -66,6 +66,19 @@ function checkAuth() {
     return csrf.value;
 }
 
+// 사운드 잠금 해제 함수
+function unlockAudio() {
+    if (audioUnlocked) return;
+    if (bellSound) {
+        bellSound.play().then(() => {
+            bellSound.pause();
+            bellSound.currentTime = 0;
+            audioUnlocked = true;
+            console.log("Audio unlocked successfully");
+        }).catch(e => console.log("Audio interaction required"));
+    }
+}
+
 // --- 메인 루프 (시계 업데이트) ---
 function updateLoop() {
     const now = getNow();
@@ -86,6 +99,7 @@ function updateLoop() {
     }
 
     // 카운트다운 및 타종 로직
+    // console
     if (diff > 0 && diff <= 1000*60) {
         if (countdownDisplay) {
             countdownDisplay.classList.remove('hidden');
@@ -247,6 +261,9 @@ async function heartbeat() {
 document.addEventListener('DOMContentLoaded', () => {
     syncTime();
     updateLoop();
+
+    // 사용자가 페이지 어디든 클릭하면 사운드 권한 잠금 해제
+    document.body.addEventListener('click', unlockAudio, { once: true });
 
     // 메인 화면 요소가 있을 때만 실행
     if (activeUsersDisplay) setInterval(heartbeat, 5000);
